@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
 
     options {
         timestamps()
@@ -7,6 +7,7 @@ pipeline {
 
     stages {
         stage('Checkout') {
+            agent { label 'default' }
             steps {
                 checkout scm
             }
@@ -24,6 +25,7 @@ pipeline {
         }
 
         stage('Docker Rollout') {
+            agent { label 'default' }
             steps {
                 sh 'docker version'
                 sh 'docker compose version'
