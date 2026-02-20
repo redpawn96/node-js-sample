@@ -24,13 +24,15 @@ pipeline {
             }
         }
 
-        stage('Docker Rollout') {
+        stage('Deploy application') {
             agent { label 'default' }
             steps {
                 sh 'docker version'
                 sh 'docker compose version'
-                sh 'echo image tag: $(date +%Y%m%d%H%M%S)'
-                sh 'export IMAGE_TAG=$(date +%Y%m%d%H%M%S) && docker compose -f docker-compose.yaml up -d --build --force-recreate'
+                sh 'echo IMAGE_TAG=$(date +%Y%m%d%H%M%S) > .deploy.env'
+                sh 'cat .deploy.env'
+                sh 'set -a && . ./.deploy.env && set +a && docker compose -f docker-compose.yaml build app'
+                sh 'set -a && . ./.deploy.env && set +a && docker rollout -f docker-compose.yaml app'
             }
         }
     }
