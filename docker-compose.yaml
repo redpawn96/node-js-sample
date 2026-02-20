@@ -16,4 +16,5 @@ services:
 
 networks:
     app-network:
-        driver: bridge
+      name: node-js-sample_app-network
+      driver: bridge
