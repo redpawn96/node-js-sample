@@ -1,0 +1,11 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: node-js-sample:${IMAGE_TAG}
+        ports:
+            - '3000:3000'
+        environment:
+            - PORT=3000
+        restart: unless-stopped
