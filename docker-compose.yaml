@@ -10,4 +10,10 @@ services:
           - '3000:3000'
         environment:
           - PORT=3000
+        networks:
+          - app-network
         restart: unless-stopped
+
+networks:
+    app-network:
+        driver: bridge
