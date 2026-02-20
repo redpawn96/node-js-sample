@@ -7,6 +7,7 @@ pipeline {
 
     stages {
         stage('Checkout') {
+            agent { label 'docker' }
             steps {
                 checkout scm
             }
@@ -31,12 +32,6 @@ pipeline {
                 sh 'echo image tag: $(date +%Y%m%d%H%M%S)'
                 sh 'export IMAGE_TAG=$(date +%Y%m%d%H%M%S) && docker compose -f docker-compose.yaml up -d --build --force-recreate'
             }
-        }
-    }
-
-    post {
-        always {
-            archiveArtifacts artifacts: 'package.json,Procfile,index.js,public/**', allowEmptyArchive: true
         }
     }
 }
