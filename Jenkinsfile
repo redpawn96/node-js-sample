@@ -1,17 +1,13 @@
 pipeline {
-    agent none
+    agent { label 'default' }
 
     options {
         timestamps()
-    }
-
-    environment {
-        IMAGE_TAG = ''
+        skipDefaultCheckout(true)
     }
 
     stages {
         stage('Checkout') {
-            agent { label 'default' }
             steps {
                 checkout scm
             }
@@ -24,17 +20,21 @@ pipeline {
                 }
             }
             steps {
-                sh 'npm install'
+                sh 'npm ci'
+                script {
+                    def appVersion = sh(script: 'node -p "require(\'./package.json\').version"', returnStdout: true).trim()
+                    env.IMAGE_TAG = "${appVersion}-${BUILD_NUMBER}"
+                    echo "IMAGE_TAG: ${env.IMAGE_TAG}"
+                }
             }
         }
 
         stage('Build and Scan Image') {
-            agent { label 'default' }
             steps {
-                sh 'docker version'
-                sh 'docker compose version'
                 script {
-                    env.IMAGE_TAG = sh(script: 'date +%Y%m%d%H%M%S', returnStdout: true).trim()
+                    if (!env.IMAGE_TAG) {
+                        error('IMAGE_TAG is empty')
+                    }
                     echo "image tag: ${env.IMAGE_TAG}"
                 }
                 sh "docker build -f Dockerfile -t node-js-sample:${env.IMAGE_TAG} ."
@@ -43,12 +43,13 @@ pipeline {
         }
 
         stage('Deploy application') {
-            agent { label 'default' }
             steps {
-                sh 'docker version'
-                sh 'docker compose version'
-                sh "echo deploying image tag: ${env.IMAGE_TAG}"
-                sh "IMAGE_TAG=${env.IMAGE_TAG} docker rollout -f docker-compose.yaml app"
+                sh '''
+                    set -eu
+                    test -n "$IMAGE_TAG"
+                    echo "deploying image tag: $IMAGE_TAG"
+                    docker rollout -f docker-compose.yaml app
+                '''
             }
         }
     }
