@@ -35,10 +35,10 @@ pipeline {
                 sh 'docker compose version'
                 script {
                     env.IMAGE_TAG = sh(script: 'date +%Y%m%d%H%M%S', returnStdout: true).trim()
+                    echo "image tag: ${env.IMAGE_TAG}"
                 }
-                sh 'echo image tag: ${IMAGE_TAG}'
-                sh 'docker compose -f docker-compose.yaml build app'
-                sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.57.1 image --severity HIGH,CRITICAL --no-progress --exit-code 1 node-js-sample:${IMAGE_TAG}'
+                sh "docker build -f Dockerfile -t node-js-sample:${env.IMAGE_TAG} ."
+                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.57.1 image --severity HIGH,CRITICAL --no-progress --exit-code 1 node-js-sample:${env.IMAGE_TAG}"
             }
         }
 
@@ -47,8 +47,8 @@ pipeline {
             steps {
                 sh 'docker version'
                 sh 'docker compose version'
-                sh 'echo deploying image tag: ${IMAGE_TAG}'
-                sh 'docker rollout -f docker-compose.yaml app'
+                sh "echo deploying image tag: ${env.IMAGE_TAG}"
+                sh "IMAGE_TAG=${env.IMAGE_TAG} docker rollout -f docker-compose.yaml app"
             }
         }
     }
