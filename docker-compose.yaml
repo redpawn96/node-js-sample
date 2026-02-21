@@ -4,17 +4,27 @@ services:
             context: .
             dockerfile: Dockerfile
         image: node-js-sample:${IMAGE_TAG}
-        labels:
-          docker-rollout.pre-stop-hook: "touch /tmp/drain && sleep 10"
-        ports:
-          - '3000:3000'
+        expose:
+            - '3000:3000'
         environment:
-          - PORT=3000
+            - PORT=3000
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'node',
+                    '-e',
+                    "require('http').get('http://127.0.0.1:3000/', (res) => process.exit(res.statusCode >= 200 && res.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
         networks:
-          - app-network
+            - app-network
         restart: unless-stopped
 
 networks:
     app-network:
-      name: node-js-sample_app-network
-      driver: bridge
+        name: node-js-sample_app-network
+        driver: bridge
