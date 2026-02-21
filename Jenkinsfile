@@ -5,6 +5,10 @@ pipeline {
         timestamps()
     }
 
+    environment {
+        IMAGE_TAG = ''
+    }
+
     stages {
         stage('Checkout') {
             agent { label 'default' }
@@ -24,15 +28,27 @@ pipeline {
             }
         }
 
+        stage('Build and Scan Image') {
+            agent { label 'default' }
+            steps {
+                sh 'docker version'
+                sh 'docker compose version'
+                script {
+                    env.IMAGE_TAG = sh(script: 'date +%Y%m%d%H%M%S', returnStdout: true).trim()
+                }
+                sh 'echo image tag: ${IMAGE_TAG}'
+                sh 'docker compose -f docker-compose.yaml build app'
+                sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.57.1 image --severity HIGH,CRITICAL --no-progress --exit-code 1 node-js-sample:${IMAGE_TAG}'
+            }
+        }
+
         stage('Deploy application') {
             agent { label 'default' }
             steps {
                 sh 'docker version'
                 sh 'docker compose version'
-                sh 'echo IMAGE_TAG=$(date +%Y%m%d%H%M%S) > .deploy.env'
-                sh 'cat .deploy.env'
-                sh 'set -a && . ./.deploy.env && set +a && docker compose -f docker-compose.yaml build app'
-                sh 'set -a && . ./.deploy.env && set +a && docker rollout -f docker-compose.yaml app'
+                sh 'echo deploying image tag: ${IMAGE_TAG}'
+                sh 'docker rollout -f docker-compose.yaml app'
             }
         }
     }
