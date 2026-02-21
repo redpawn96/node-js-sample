@@ -4,6 +4,8 @@ services:
             context: .
             dockerfile: Dockerfile
         image: node-js-sample:${IMAGE_TAG}
+        labels:
+          docker-rollout.pre-stop-hook: "touch /tmp/drain && sleep 10"
         expose:
             - '3000'
         environment:
