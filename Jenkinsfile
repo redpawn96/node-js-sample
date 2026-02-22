@@ -44,12 +44,8 @@ pipeline {
 
         stage('Deploy application') {
             steps {
-                sh '''
-                    set -eu
-                    test -n "$IMAGE_TAG"
-                    echo "deploying image tag: $IMAGE_TAG"
-                    docker rollout -f docker-compose.yaml app
-                '''
+                sh "echo 'deploying image tag: ${env.IMAGE_TAG}'"
+                sh 'docker rollout -f docker-compose.yaml app'
             }
         }
     }
